@@ -29,6 +29,7 @@ paper_detect\main.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_spi.h
 paper_detect\main.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_tim.h
 paper_detect\main.o: ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_tim_ex.h
 paper_detect\main.o: ../Core/Inc/adc.h
+paper_detect\main.o: ../Core/Inc/dma.h
 paper_detect\main.o: ../Core/Inc/spi.h
 paper_detect\main.o: ../Core/Inc/tim.h
 paper_detect\main.o: ../Core/Inc/gpio.h

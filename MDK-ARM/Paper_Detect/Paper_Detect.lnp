@@ -4,6 +4,7 @@
 "paper_detect\main.o"
 "paper_detect\gpio.o"
 "paper_detect\adc.o"
+"paper_detect\dma.o"
 "paper_detect\spi.o"
 "paper_detect\tim.o"
 "paper_detect\stm32f1xx_it.o"

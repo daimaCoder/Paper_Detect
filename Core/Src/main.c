@@ -41,6 +41,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "adc.h"
+#include "dma.h"
 #include "spi.h"
 #include "tim.h"
 #include "gpio.h"
@@ -68,7 +69,8 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-
+uint32_t adc_value;
+float vol;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -136,13 +138,16 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
+  MX_DMA_Init();
   MX_TIM1_Init();
   MX_TIM2_Init();
   MX_SPI1_Init();
   MX_ADC1_Init();
   /* USER CODE BEGIN 2 */
-  HAL_ADCEx_Calibration_Start(&hadc1);  //自校准	
-	
+	OLED_Init();
+	HAL_ADCEx_Calibration_Start(&hadc1);  //自校准	
+	HAL_ADC_Start_DMA(&hadc1, &adc_value, 1);
+	HAL_Delay(5);
 //	HAL_TIM_PWM_Start(&htim2 , TIM_CHANNEL_1 );
 //	delay_us(5);
 //	HAL_TIM_PWM_Start(&htim1 , TIM_CHANNEL_1 );
@@ -172,7 +177,7 @@ int main(void)
 //		OLED_ShowCHinese(90,0,5);//?
 //		OLED_ShowCHinese(108,0,6);//?
 //		OLED_ShowString(0,2,"1.3' OLED TEST");
-//	//	OLED_ShowString(8,2,"ZHONGJINGYUAN");  
+//		OLED_ShowString(8,2,"ZHONGJINGYUAN");  
 //	 	OLED_ShowString(20,4,"2014/05/01");  
 //		OLED_ShowString(0,6,"ASCII:");  
 //		OLED_ShowString(63,6,"CODE:");  
@@ -187,11 +192,11 @@ int main(void)
 //		adc_value = HAL_ADC_GetValue(&hadc1);
 //    HAL_UART_Transmit(&huart1,"llolllooo",8,10);
 //		printf("hello");
-//		vol = adc_value/4095.0 * 3.3;
-//		    
+  		vol = adc_value/4095.0 * 3.3;
+			OLED_ShowNum(0,0,vol,4,16);		    
 //    printf("ADC value = %.4f\r\n",vol);  //打印输出
-//		HAL_Delay(500);
-		//OLED_Clear();
+  		HAL_Delay(500);
+//    OLED_Clear();
 		
 		
   }
@@ -250,7 +255,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 		  HAL_Delay(20);// 延时一小段时间，消除抖动 
     if(HAL_GPIO_ReadPin(KEY1_GPIO_Port, KEY1_Pin) == 0)//按键1判断
     {
-	    if(__HAL_TIM_GET_COUNTER(&htim1) == 0  && __HAL_TIM_GET_COUNTER(&htim2) == 0)
+	    if(__HAL_TIM_GET_COUNTER(&htim1) == 0 && __HAL_TIM_GET_COUNTER(&htim2) == 0)
 			{
 				HAL_TIM_PWM_Start(&htim2 , TIM_CHANNEL_1 );
 	      delay_us(5);
