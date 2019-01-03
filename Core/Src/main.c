@@ -69,14 +69,19 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-uint32_t adc_value;
-float vol;
+uint32_t Flash_addr = 0x08008000;
+uint32_t adc_value = 0;
+float vol,limit = 0;
+int vol_f;
+uint8_t flag = 0 ,n1 = 0,n2 = 0,n3 = 0;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 /* USER CODE BEGIN PFP */
-
+void clear_flash(void);   //擦除FLASH 
+void write_flash(void);   //写FLASH
+void read_flash(void);  //读FLASH
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -145,6 +150,17 @@ int main(void)
   MX_ADC1_Init();
   /* USER CODE BEGIN 2 */
 	OLED_Init();
+	read_flash();  //读FLASH
+	OLED_ShowString(0,0,"PWM:OFF");
+	OLED_ShowCHinese(0,2,7);//电
+	OLED_ShowCHinese(18,2,8);//压
+	OLED_ShowChar(37,2 ,':');
+  OLED_ShowNum(0,4,n1,1,16);
+	OLED_ShowChar(9,4 ,'.');
+	OLED_ShowNum(16,4,n2,1,16);
+	OLED_ShowNum(24,4,n3,1,16);
+	OLED_ShowChar(0,6 ,'^');OLED_ShowChar(16,6 ,' ');OLED_ShowChar(24,6 ,' ');
+	limit = n1 + n2/10.0 + n3/100.0;	
 	HAL_ADCEx_Calibration_Start(&hadc1);  //自校准	
 	HAL_ADC_Start_DMA(&hadc1, &adc_value, 1);
 	HAL_Delay(5);
@@ -168,14 +184,14 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
 		
-		//		OLED_Clear();
+		//OLED_Clear();
 //		OLED_ShowCHinese(0,0,0);//?
 //		OLED_ShowCHinese(18,0,1);//?
 //		OLED_ShowCHinese(36,0,2);//?
 //		OLED_ShowCHinese(54,0,3);//?
 //		OLED_ShowCHinese(72,0,4);//?
 //		OLED_ShowCHinese(90,0,5);//?
-//		OLED_ShowCHinese(108,0,6);//?
+// 		OLED_ShowCHinese(108,0,6);//?
 //		OLED_ShowString(0,2,"1.3' OLED TEST");
 //		OLED_ShowString(8,2,"ZHONGJINGYUAN");  
 //	 	OLED_ShowString(20,4,"2014/05/01");  
@@ -184,7 +200,7 @@ int main(void)
 //		OLED_ShowChar(48,6,t);//??ASCII??	   
 //		t++;
 //		if(t>'~')t=' ';
-//		OLED_ShowNum(103,6,t,3,16);//??ASCII?????
+		//OLED_ShowNum(103,6,101,3,16);//??ASCII?????
 
 
 //    HAL_ADC_Start(&hadc1);                //启动ADC转换
@@ -193,12 +209,31 @@ int main(void)
 //    HAL_UART_Transmit(&huart1,"llolllooo",8,10);
 //		printf("hello");
   		vol = adc_value/4095.0 * 3.3;
-			OLED_ShowNum(0,0,vol,4,16);		    
+
+			vol_f = (vol - (int)vol) * 1000;
+			
+  		OLED_ShowNum(40,2,vol,2,16);
+      OLED_ShowChar(56,2 ,'.');	
+      OLED_ShowNum(64,2,vol_f,3,16);
+//    OLED_ShowNum(0,6,adc_value,4,16);
+      // OLED_ShowString(56,4,"101");    
 //    printf("ADC value = %.4f\r\n",vol);  //打印输出
+      if(vol > limit)
+			{
+				HAL_GPIO_WritePin(GPIOA, LED1_Pin, GPIO_PIN_RESET);
+			  HAL_GPIO_WritePin(GPIOA, LED2_Pin, GPIO_PIN_SET);
+			}
+			else
+			{
+				HAL_GPIO_WritePin(GPIOA, LED1_Pin, GPIO_PIN_SET);
+			  HAL_GPIO_WritePin(GPIOA, LED2_Pin, GPIO_PIN_RESET);
+			}
+			
   		HAL_Delay(500);
 //    OLED_Clear();
 		
-		
+		   clear_flash();
+			 write_flash();
   }
   /* USER CODE END 3 */
 }
@@ -248,18 +283,20 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
+/*******************外部中断回调函数***********************/
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
 	 if(GPIO_Pin & KEY1_Pin)
 	 {
-		  HAL_Delay(20);// 延时一小段时间，消除抖动 
-    if(HAL_GPIO_ReadPin(KEY1_GPIO_Port, KEY1_Pin) == 0)//按键1判断
-    {
+//		  HAL_Delay(20);// 延时一小段时间，消除抖动 
+//    if(HAL_GPIO_ReadPin(KEY1_GPIO_Port, KEY1_Pin) == 0)//按键1判断
+//    {
 	    if(__HAL_TIM_GET_COUNTER(&htim1) == 0 && __HAL_TIM_GET_COUNTER(&htim2) == 0)
 			{
 				HAL_TIM_PWM_Start(&htim2 , TIM_CHANNEL_1 );
 	      delay_us(5);
 	      HAL_TIM_PWM_Start(&htim1 , TIM_CHANNEL_1 );
+				OLED_ShowString(0,0,"PWM: ON");
 			}   	 
 		  else
 			{			
@@ -267,17 +304,91 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 				HAL_TIM_PWM_Stop(&htim2 , TIM_CHANNEL_1 );
 	      __HAL_TIM_SET_COUNTER(&htim1 ,0);
 				__HAL_TIM_SET_COUNTER(&htim2 ,0);
+				OLED_ShowString(0,0,"PWM:OFF");
 			}	
-		 }
+//		 } //硬件已经消抖，故去掉软件消抖
 	  }
 	 else if(GPIO_Pin & KEY2_Pin)
 	 {
-		 
+		   switch(flag)
+			 {
+				 case 0 :
+					 flag = 1;OLED_ShowChar(0,6 ,' ');OLED_ShowChar(16,6 ,'^');OLED_ShowChar(24,6 ,' ');
+				   break;
+				 case 1 :
+					 flag = 2;OLED_ShowChar(0,6 ,' ');OLED_ShowChar(16,6 ,' ');OLED_ShowChar(24,6 ,'^');
+				   break;
+				 case 2 :
+					 flag = 0;OLED_ShowChar(0,6 ,'^');OLED_ShowChar(16,6 ,' ');OLED_ShowChar(24,6 ,' ');
+				   break;
+				 default:
+					 break;
+			 }
+			// OLED_ShowNum(0,6,flag,1,16);
 	 }
 	 else if(GPIO_Pin & KEY3_Pin)
 	 {
-	 
+	   
+		 switch(flag)
+				{
+					case 0:
+						n1 = n1 + 1;
+					  if(n1 == 4) 
+							n1 = 0;
+						break;
+					case 1:
+						n2 = n2 + 1;
+					  if(n2 == 10)
+							n2 = 0;
+					  break;
+					case 2:
+						n3 = n3 + 1;
+					  if(n3 == 10)
+							n3 = 0;
+					  break;
+					default:
+					 break;			
+				}
+			
+		 OLED_ShowNum(0,4,n1,1,16);
+		 OLED_ShowChar(9,4 ,'.');
+		 OLED_ShowNum(16,4,n2,1,16);
+		 OLED_ShowNum(24,4,n3,1,16);
+		 limit = n1 + n2/10.0 + n3/100.0;
+		 clear_flash();
+		 write_flash();
+		 
 	 }
+}
+
+/*****************************************FLASH相关函数**************************************************/
+void clear_flash(void)     //清除FLASH
+{
+	HAL_FLASH_Unlock();
+  FLASH_EraseInitTypeDef f;
+  f.TypeErase = FLASH_TYPEERASE_PAGES;
+  f.PageAddress = Flash_addr;
+  f.NbPages = FLASH_BANK_1;
+  uint32_t PageError = 0;
+  HAL_FLASHEx_Erase(&f, &PageError);
+	HAL_FLASH_Lock();
+}
+
+
+void write_flash(void)   //写FLASH
+{
+	HAL_FLASH_Unlock();
+	HAL_FLASH_Program(FLASH_TYPEPROGRAM_WORD, Flash_addr +  8, (uint32_t)n1);
+	HAL_FLASH_Program(FLASH_TYPEPROGRAM_WORD, Flash_addr +  16, (uint32_t)n2);
+	HAL_FLASH_Program(FLASH_TYPEPROGRAM_WORD, Flash_addr +  24, (uint32_t)n3);
+	HAL_FLASH_Lock();
+}
+
+void read_flash(void)   //读FLASH
+{
+	n1 = *(__IO uint32_t*)(Flash_addr + 8);
+  n2 = *(__IO uint32_t*)(Flash_addr + 16);
+  n3 = *(__IO uint32_t*)(Flash_addr + 24);	
 }
 
 /* USER CODE END 4 */
