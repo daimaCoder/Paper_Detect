@@ -167,7 +167,7 @@ void OLED_ShowNum(uint8_t x,uint8_t y,uint32_t num,uint8_t len,uint8_t size2)
 		{
 			if(temp==0)
 			{
-				OLED_ShowChar(x+(size2/2)*t,y,' ');
+				OLED_ShowChar(x+(size2/2)*t,y,'0');
 				continue;
 			}else enshow=1; 
 		 	 

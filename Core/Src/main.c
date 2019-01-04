@@ -151,6 +151,12 @@ int main(void)
   /* USER CODE BEGIN 2 */
 	OLED_Init();
 	read_flash();  //读FLASH
+	if(n1 == 0xff)
+		n1 = 0;
+	if(n2 == 0xff)
+		n2 = 0;
+  if(n3 == 0xff)
+		n3 = 0;
 	OLED_ShowString(0,0,"PWM:OFF");
 	OLED_ShowCHinese(0,2,7);//电
 	OLED_ShowCHinese(18,2,8);//压
@@ -162,8 +168,8 @@ int main(void)
 	OLED_ShowChar(0,6 ,'^');OLED_ShowChar(16,6 ,' ');OLED_ShowChar(24,6 ,' ');
 	limit = n1 + n2/10.0 + n3/100.0;	
 	HAL_ADCEx_Calibration_Start(&hadc1);  //自校准	
-	HAL_ADC_Start_DMA(&hadc1, &adc_value, 1);
-	HAL_Delay(5);
+	//HAL_ADC_Start_DMA(&hadc1, &adc_value, 1);
+  delay_us(5);
 //	HAL_TIM_PWM_Start(&htim2 , TIM_CHANNEL_1 );
 //	delay_us(5);
 //	HAL_TIM_PWM_Start(&htim1 , TIM_CHANNEL_1 );
@@ -184,7 +190,6 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
 		
-		//OLED_Clear();
 //		OLED_ShowCHinese(0,0,0);//?
 //		OLED_ShowCHinese(18,0,1);//?
 //		OLED_ShowCHinese(36,0,2);//?
@@ -203,16 +208,16 @@ int main(void)
 		//OLED_ShowNum(103,6,101,3,16);//??ASCII?????
 
 
-//    HAL_ADC_Start(&hadc1);                //启动ADC转换
-//		HAL_ADC_PollForConversion(&hadc1,10); //等待转换完成
-//		adc_value = HAL_ADC_GetValue(&hadc1);
+    HAL_ADC_Start(&hadc1);                //启动ADC转换
+		HAL_ADC_PollForConversion(&hadc1,10); //等待转换完成
+		adc_value = HAL_ADC_GetValue(&hadc1);
 //    HAL_UART_Transmit(&huart1,"llolllooo",8,10);
 //		printf("hello");
   		vol = adc_value/4095.0 * 3.3;
-
+      
 			vol_f = (vol - (int)vol) * 1000;
 			
-  		OLED_ShowNum(40,2,vol,2,16);
+  		OLED_ShowNum(48,2,vol,1,16);
       OLED_ShowChar(56,2 ,'.');	
       OLED_ShowNum(64,2,vol_f,3,16);
 //    OLED_ShowNum(0,6,adc_value,4,16);
@@ -229,11 +234,10 @@ int main(void)
 			  HAL_GPIO_WritePin(GPIOA, LED2_Pin, GPIO_PIN_RESET);
 			}
 			
-  		HAL_Delay(500);
+  		delay_ms(500);
 //    OLED_Clear();
 		
-		   clear_flash();
-			 write_flash();
+		   
   }
   /* USER CODE END 3 */
 }
