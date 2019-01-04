@@ -295,6 +295,11 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 			{
 				HAL_TIM_PWM_Start(&htim2 , TIM_CHANNEL_1 );
 	      delay_us(5);
+				for(int i;i>18000;i++)
+				{
+					__NOP();
+				
+				}
 	      HAL_TIM_PWM_Start(&htim1 , TIM_CHANNEL_1 );
 				OLED_ShowString(0,0,"PWM: ON");
 			}   	 
@@ -359,6 +364,8 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 		 write_flash();
 		 
 	 }
+	 
+	 __HAL_GPIO_EXTI_CLEAR_IT(GPIO_Pin);
 }
 
 /*****************************************FLASHÏà¹Øº¯Êý**************************************************/
