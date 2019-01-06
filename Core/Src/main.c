@@ -71,6 +71,7 @@
 /* USER CODE BEGIN PV */
 uint32_t Flash_addr = 0x08008000;
 uint32_t adc_value = 0;
+uint32_t adc[100],adc_sum = 0;
 float vol,limit = 0;
 int vol_f;
 uint8_t flag = 0 ,n1 = 0,n2 = 0,n3 = 0;
@@ -169,7 +170,8 @@ int main(void)
 	limit = n1 + n2/10.0 + n3/100.0;	
 	HAL_ADCEx_Calibration_Start(&hadc1);  //自校准	
 	//HAL_ADC_Start_DMA(&hadc1, &adc_value, 1);
-  delay_us(5);
+  delay_ms(5);
+	uint16_t i;
 //	HAL_TIM_PWM_Start(&htim2 , TIM_CHANNEL_1 );
 //	delay_us(5);
 //	HAL_TIM_PWM_Start(&htim1 , TIM_CHANNEL_1 );
@@ -206,21 +208,26 @@ int main(void)
 //		t++;
 //		if(t>'~')t=' ';
 		//OLED_ShowNum(103,6,101,3,16);//??ASCII?????
-
-
+	adc_sum = 0;
+   for(i = 0;i < 100;i++)
+	 {
     HAL_ADC_Start(&hadc1);                //启动ADC转换
 		HAL_ADC_PollForConversion(&hadc1,10); //等待转换完成
-		adc_value = HAL_ADC_GetValue(&hadc1);
+		adc[i] = HAL_ADC_GetValue(&hadc1);
+		adc_sum = adc_sum + adc[i];
+	}	
+		adc_value = adc_sum / 100;
+		
 //    HAL_UART_Transmit(&huart1,"llolllooo",8,10);
 //		printf("hello");
   		vol = adc_value/4095.0 * 3.3;
-      
-			vol_f = (vol - (int)vol) * 1000;
-			
+			vol_f = (vol - (int)vol) * 100;
   		OLED_ShowNum(48,2,vol,1,16);
       OLED_ShowChar(56,2 ,'.');	
-      OLED_ShowNum(64,2,vol_f,3,16);
+      OLED_ShowNum(64,2,vol_f,2,16);
 //    OLED_ShowNum(0,6,adc_value,4,16);
+
+    
       // OLED_ShowString(56,4,"101");    
 //    printf("ADC value = %.4f\r\n",vol);  //打印输出
       if(vol > limit)
@@ -234,7 +241,7 @@ int main(void)
 			  HAL_GPIO_WritePin(GPIOA, LED2_Pin, GPIO_PIN_RESET);
 			}
 			
-  		delay_ms(500);
+  		delay_ms(100);
 //    OLED_Clear();
 		
 		   
@@ -298,7 +305,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 	    if(__HAL_TIM_GET_COUNTER(&htim1) == 0 && __HAL_TIM_GET_COUNTER(&htim2) == 0)
 			{
 				HAL_TIM_PWM_Start(&htim2 , TIM_CHANNEL_1 );
-	      delay_us(5);
+	      delay_us(5); 
 				for(int i;i>18000;i++)
 				{
 					__NOP();
