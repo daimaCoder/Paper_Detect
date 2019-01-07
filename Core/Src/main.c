@@ -208,14 +208,15 @@ int main(void)
 //		t++;
 //		if(t>'~')t=' ';
 		//OLED_ShowNum(103,6,101,3,16);//??ASCII?????
-	adc_sum = 0;
+	 adc_sum = 0;
    for(i = 0;i < 100;i++)
 	 {
     HAL_ADC_Start(&hadc1);                //启动ADC转换
 		HAL_ADC_PollForConversion(&hadc1,10); //等待转换完成
 		adc[i] = HAL_ADC_GetValue(&hadc1);
 		adc_sum = adc_sum + adc[i];
-	}	
+		delay_ms(5);
+	 }	
 		adc_value = adc_sum / 100;
 		
 //    HAL_UART_Transmit(&huart1,"llolllooo",8,10);
@@ -241,7 +242,7 @@ int main(void)
 			  HAL_GPIO_WritePin(GPIOA, LED2_Pin, GPIO_PIN_RESET);
 			}
 			
-  		delay_ms(100);
+  		//delay_ms(100);
 //    OLED_Clear();
 		
 		   
